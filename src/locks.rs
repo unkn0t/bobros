@@ -98,7 +98,6 @@ impl<T: ?Sized> Mutex<T> {
         MutexGuard::new(self)
     }
 
-    #[allow(dead_code)]
     pub fn try_lock(&self) -> Option<MutexGuard<'_, T>> {
         if self.inner.try_lock() {
             Some(MutexGuard::new(self))
@@ -107,7 +106,6 @@ impl<T: ?Sized> Mutex<T> {
         }
     }
 
-    #[allow(dead_code)]
     pub fn unlock(guard: MutexGuard<'_, T>) {
         drop(guard);
     }
