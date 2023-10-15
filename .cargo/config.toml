@@ -1,0 +1,11 @@
+# Recompile core library with bobros target
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins"]
+
+# Use bobros target
+[build]
+target = "x86_64-bobros.json"
+
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
