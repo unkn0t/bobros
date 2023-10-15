@@ -1,11 +1,11 @@
 use uart_16550::SerialPort;
-use super::locks::{Mutex, Lazy};
+use spin::{Mutex, Lazy};
 
-static SERIAL1: Mutex<Lazy<SerialPort>> = Mutex::new(unsafe {Lazy::new(|| {
-    let mut serial_port = SerialPort::new(0x3F8);
+static SERIAL1: Lazy<Mutex<SerialPort>> = Lazy::new(|| {
+    let mut serial_port = unsafe { SerialPort::new(0x3F8) };
     serial_port.init();
-    serial_port
-})});
+    Mutex::new(serial_port)
+});
 
 #[doc(hidden)]
 pub fn _print(args: ::core::fmt::Arguments) {

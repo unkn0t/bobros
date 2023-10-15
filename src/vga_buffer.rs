@@ -1,6 +1,6 @@
 use volatile::Volatile;
 use core::fmt;
-use super::locks::{Mutex, Lazy};
+use spin::{Mutex, Lazy};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -118,11 +118,11 @@ impl fmt::Write for Writer {
     }
 }
 
-static WRITER: Mutex<Lazy<Writer>> = Mutex::new(unsafe { Lazy::new(|| Writer {
+static WRITER: Lazy<Mutex<Writer>> = Lazy::new(|| Mutex::new(Writer {
     column_position: 0,
     color_code: ColorCode::new(Color::Yellow, Color::Black),
-    buffer: &mut *(0xb8000 as *mut Buffer),
-})});
+    buffer: unsafe{ &mut *(0xb8000 as *mut Buffer) },
+}));
 
 #[macro_export]
 macro_rules! print {

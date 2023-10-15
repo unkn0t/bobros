@@ -11,9 +11,13 @@ use bobros::println;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
-   
+
+    bobros::init();
+
     #[cfg(test)]
     test_main();
+
+    println!("It did not crash!");
 
     loop {}
 }
