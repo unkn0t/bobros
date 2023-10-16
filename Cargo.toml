@@ -9,6 +9,8 @@ volatile = "0.2.6"
 x86_64 = "0.14.2"
 uart_16550 = "0.2.0"
 spin = "0.9.8"
+pic8259 = "0.10.4"
+pc-keyboard = "0.7.0"
 
 [package.metadata.bootimage]
 test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio",
