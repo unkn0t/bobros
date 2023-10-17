@@ -48,7 +48,8 @@ pub extern "C" fn _start() -> ! {
 #[allow(unconditional_recursion)]
 fn stack_overflow() {
     stack_overflow(); // for each recursion, the return address is pushed
-    volatile::Volatile::new(0).read(); // prevent tail recursion optimizations
+    let value = 0;
+    unsafe{ volatile::VolatilePtr::new_read_only((&value).into()) }.read(); // prevent tail recursion optimizations
 }
 
 #[panic_handler]

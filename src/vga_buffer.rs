@@ -1,4 +1,4 @@
-use volatile::Volatile;
+use volatile::VolatilePtr;
 use core::fmt;
 use spin::{Mutex, Lazy};
 
@@ -46,7 +46,7 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
@@ -79,7 +79,7 @@ impl Writer {
                 let col = self.column_position;
 
                 let color_code = self.color_code;
-                self.buffer.chars[row][col].write(ScreenChar {
+                unsafe {VolatilePtr::new((&mut self.buffer.chars[row][col]).into())}.write(ScreenChar {
                     ascii_character: byte,
                     color_code,
                 });
@@ -91,8 +91,8 @@ impl Writer {
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
-                let character = self.buffer.chars[row][col].read();
-                self.buffer.chars[row - 1][col].write(character);
+                let character = unsafe {VolatilePtr::new((&self.buffer.chars[row][col]).into())}.read();
+                unsafe {VolatilePtr::new((&mut self.buffer.chars[row - 1][col]).into())}.write(character);
             }
         }
         self.clear_row(BUFFER_HEIGHT - 1);
@@ -106,7 +106,7 @@ impl Writer {
         };
 
         for col in 0..BUFFER_WIDTH {
-            self.buffer.chars[row][col].write(blank);
+            unsafe {VolatilePtr::new((&mut self.buffer.chars[row][col]).into())}.write(blank);
         }
     }
 }
@@ -168,7 +168,8 @@ fn test_println_output() {
         let mut writer = WRITER.lock();
         writeln!(writer, "\n{}", s).expect("writeln failed");
         for (i, c) in s.chars().enumerate() {
-            let screen_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
+            let screen_char = unsafe {VolatilePtr::new((&writer.buffer.chars[BUFFER_HEIGHT - 2][i]).into())}
+                .read();
             assert_eq!(char::from(screen_char.ascii_character), c);
         }
     });
