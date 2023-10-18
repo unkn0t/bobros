@@ -2,6 +2,7 @@
 #![cfg_attr(test, no_main)]
 #![feature(negative_impls)]
 #![feature(abi_x86_interrupt)]
+#![feature(const_mut_refs)]
 
 #![feature(custom_test_frameworks)]
 #![test_runner(crate::test_runner)]
