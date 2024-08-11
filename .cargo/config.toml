@@ -1,11 +1,5 @@
 # Recompile core and alloc libraries for specified target
 [unstable]
-build-std-features = ["compiler-builtins-mem"]
-build-std = ["core", "compiler_builtins", "alloc"]
-
-# Use bobros target by default
-[build]
-target = "x86_64-bobros.json"
-
-[target.'cfg(target_os = "none")']
-runner = "bootimage runner"
+bindeps = true
+# build-std-features = ["compiler-builtins-mem"]
+# build-std = ["core", "compiler_builtins", "alloc"]

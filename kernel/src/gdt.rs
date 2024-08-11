@@ -14,7 +14,7 @@ static TSS: Lazy<TaskStateSegment> = Lazy::new(|| {
 
         // TODO: Fix stack allocation
         let stack_start = VirtAddr::from_ptr(unsafe { &*ptr::addr_of!(STACK) });
-        stack_start + STACK_SIZE
+        stack_start + STACK_SIZE as u64
     };
     tss
 });
@@ -26,8 +26,8 @@ struct Selectors {
 
 static GDT: Lazy<(GlobalDescriptorTable, Selectors)> = Lazy::new(|| {
     let mut gdt = GlobalDescriptorTable::new();
-    let code_selector = gdt.add_entry(Descriptor::kernel_code_segment());
-    let tss_selector = gdt.add_entry(Descriptor::tss_segment(&TSS));
+    let code_selector = gdt.append(Descriptor::kernel_code_segment());
+    let tss_selector = gdt.append(Descriptor::tss_segment(&TSS));
     (
         gdt,
         Selectors {
@@ -38,13 +38,17 @@ static GDT: Lazy<(GlobalDescriptorTable, Selectors)> = Lazy::new(|| {
 });
 
 pub fn init() {
-    use x86_64::instructions::segmentation::{Segment, CS};
+    use x86_64::instructions::segmentation::{Segment, CS, DS, SS};
     use x86_64::instructions::tables::load_tss;
 
     let (gdt, selectors) = &*GDT;
     gdt.load();
 
     unsafe {
+        // set ss and ds to zero (new bootloader doesn't do it)
+        SS::set_reg(SegmentSelector::NULL);
+        DS::set_reg(SegmentSelector::NULL);
+
         CS::set_reg(selectors.code_selector);
         load_tss(selectors.tss_selector);
     }

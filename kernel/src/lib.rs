@@ -18,8 +18,15 @@ pub mod vga_buffer;
 
 use core::panic::PanicInfo;
 
+use bootloader_api::{config, BootloaderConfig};
 #[cfg(test)]
-use bootloader::{entry_point, BootInfo};
+use bootloader_api::{entry_point, BootInfo};
+
+pub static BOOTLOADER_CONFIG: BootloaderConfig = {
+    let mut config = BootloaderConfig::new_default();
+    config.mappings.physical_memory = Some(config::Mapping::Dynamic);
+    config
+};
 
 pub trait Testable {
     fn run(&self);
@@ -68,7 +75,7 @@ entry_point!(test_kernel_main);
 
 /// Entry point for `cargo test`
 #[cfg(test)]
-fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
+fn test_kernel_main(_boot_info: &'static mut BootInfo) -> ! {
     init();
     test_main();
     hlt_loop();

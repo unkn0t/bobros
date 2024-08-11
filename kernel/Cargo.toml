@@ -1,0 +1,24 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2021"
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+x86_64 = "0.15"
+
+[dependencies]
+bootloader_api = "0.11"
+volatile = "0.6"
+pic8259 = "0.11"
+pc-keyboard = "0.7"
+spin = "0.9"
+uart_16550 = "0.3"
+noto-sans-mono-bitmap = "0.3.0"
+
+[[test]]
+name = "should_panic"
+harness = false
+
+[[test]]
+name = "stack_overflow"
+harness = false
