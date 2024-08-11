@@ -1,8 +1,7 @@
-use volatile::VolatilePtr;
 use core::fmt;
-use spin::{Mutex, Lazy};
+use spin::{Lazy, Mutex};
+use volatile::VolatilePtr;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Color {
@@ -66,7 +65,7 @@ impl Writer {
             }
         }
     }
-    
+
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
@@ -79,10 +78,12 @@ impl Writer {
                 let col = self.column_position;
 
                 let color_code = self.color_code;
-                unsafe {VolatilePtr::new((&mut self.buffer.chars[row][col]).into())}.write(ScreenChar {
-                    ascii_character: byte,
-                    color_code,
-                });
+                unsafe { VolatilePtr::new((&mut self.buffer.chars[row][col]).into()) }.write(
+                    ScreenChar {
+                        ascii_character: byte,
+                        color_code,
+                    },
+                );
                 self.column_position += 1;
             }
         }
@@ -91,8 +92,10 @@ impl Writer {
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
-                let character = unsafe {VolatilePtr::new((&self.buffer.chars[row][col]).into())}.read();
-                unsafe {VolatilePtr::new((&mut self.buffer.chars[row - 1][col]).into())}.write(character);
+                let character =
+                    unsafe { VolatilePtr::new((&self.buffer.chars[row][col]).into()) }.read();
+                unsafe { VolatilePtr::new((&mut self.buffer.chars[row - 1][col]).into()) }
+                    .write(character);
             }
         }
         self.clear_row(BUFFER_HEIGHT - 1);
@@ -106,7 +109,7 @@ impl Writer {
         };
 
         for col in 0..BUFFER_WIDTH {
-            unsafe {VolatilePtr::new((&mut self.buffer.chars[row][col]).into())}.write(blank);
+            unsafe { VolatilePtr::new((&mut self.buffer.chars[row][col]).into()) }.write(blank);
         }
     }
 }
@@ -118,11 +121,13 @@ impl fmt::Write for Writer {
     }
 }
 
-static WRITER: Lazy<Mutex<Writer>> = Lazy::new(|| Mutex::new(Writer {
-    column_position: 0,
-    color_code: ColorCode::new(Color::Yellow, Color::Black),
-    buffer: unsafe{ &mut *(0xb8000 as *mut Buffer) },
-}));
+static WRITER: Lazy<Mutex<Writer>> = Lazy::new(|| {
+    Mutex::new(Writer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::Yellow, Color::Black),
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+    })
+});
 
 #[macro_export]
 macro_rules! print {
@@ -144,7 +149,6 @@ pub fn _print(args: fmt::Arguments) {
         WRITER.lock().write_fmt(args).unwrap();
     });
 }
-
 
 #[test_case]
 fn test_println_simple() {
@@ -168,10 +172,10 @@ fn test_println_output() {
         let mut writer = WRITER.lock();
         writeln!(writer, "\n{}", s).expect("writeln failed");
         for (i, c) in s.chars().enumerate() {
-            let screen_char = unsafe {VolatilePtr::new((&writer.buffer.chars[BUFFER_HEIGHT - 2][i]).into())}
-                .read();
+            let screen_char =
+                unsafe { VolatilePtr::new((&writer.buffer.chars[BUFFER_HEIGHT - 2][i]).into()) }
+                    .read();
             assert_eq!(char::from(screen_char.ascii_character), c);
         }
     });
 }
-

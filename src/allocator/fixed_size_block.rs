@@ -1,6 +1,9 @@
 use super::{linked_list::LinkedListAllocator, Locked};
-use alloc::alloc::{Layout, GlobalAlloc};
-use core::{ptr::{self, NonNull}, mem};
+use alloc::alloc::{GlobalAlloc, Layout};
+use core::{
+    mem,
+    ptr::{self, NonNull},
+};
 
 /// The block sizes to use.
 ///
@@ -28,8 +31,7 @@ unsafe impl GlobalAlloc for Locked<FixedSizeBlockAllocator> {
                         let block_size = BLOCK_SIZES[index];
                         // only works if all block sizes are a power of 2
                         let block_align = block_size;
-                        let layout = Layout::from_size_align(block_size, block_align)
-                            .unwrap();
+                        let layout = Layout::from_size_align(block_size, block_align).unwrap();
                         allocator.fallback_alloc(layout)
                     }
                 }
@@ -72,6 +74,7 @@ impl FixedSizeBlockAllocator {
 
     /// Initialize the allocator with the given heap bounds.
     ///
+    /// # Safety
     /// This function is unsafe because the caller must guarantee that the given
     /// heap bounds are valid and that the heap is unused. This method must be
     /// called only once.
@@ -88,6 +91,12 @@ impl FixedSizeBlockAllocator {
     }
 }
 
+impl Default for FixedSizeBlockAllocator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 struct ListNode {
     next: Option<&'static mut ListNode>,
 }
@@ -99,4 +108,3 @@ fn list_index(layout: &Layout) -> Option<usize> {
     let required_block_size = layout.size().max(layout.align());
     BLOCK_SIZES.iter().position(|&s| s >= required_block_size)
 }
-

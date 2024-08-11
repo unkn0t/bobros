@@ -1,6 +1,9 @@
 use super::{align_up, Locked};
-use core::{mem, ptr::{self, NonNull}};
 use alloc::alloc::{GlobalAlloc, Layout};
+use core::{
+    mem,
+    ptr::{self, NonNull},
+};
 
 pub struct LinkedListAllocator {
     head: ListNode,
@@ -28,13 +31,13 @@ impl LinkedListAllocator {
         }
     }
 
-    pub unsafe fn deallocate(&mut self, ptr: NonNull<u8>, layout: Layout) {
+    pub(crate) unsafe fn deallocate(&mut self, ptr: NonNull<u8>, layout: Layout) {
         // perform layout adjustments
         let (size, _) = LinkedListAllocator::size_align(layout);
         self.add_free_region(ptr.as_ptr() as usize, size)
     }
 
-    pub fn allocate_first_fit(&mut self, layout: Layout) -> Result<NonNull<u8>, ()> {
+    pub(crate) fn allocate_first_fit(&mut self, layout: Layout) -> Result<NonNull<u8>, ()> {
         // perform layout adjustments
         let (size, align) = LinkedListAllocator::size_align(layout);
 
@@ -42,7 +45,9 @@ impl LinkedListAllocator {
             let alloc_end = alloc_start.checked_add(size).expect("overflow");
             let excess_size = region.end_addr() - alloc_end;
             if excess_size > 0 {
-                unsafe { self.add_free_region(alloc_end, excess_size); }
+                unsafe {
+                    self.add_free_region(alloc_end, excess_size);
+                }
             }
             Ok(unsafe { NonNull::new_unchecked(alloc_start as *mut u8) })
         } else {
@@ -67,14 +72,12 @@ impl LinkedListAllocator {
     /// it from the list.
     ///
     /// Returns a tuple of the list node and the start address of the allocation.
-    fn find_region(&mut self, size: usize, align: usize)
-        -> Option<(&'static mut ListNode, usize)>
-    {
+    fn find_region(&mut self, size: usize, align: usize) -> Option<(&'static mut ListNode, usize)> {
         // reference to current list node, updated for each iteration
         let mut current = &mut self.head;
         // look for a large enough memory region in linked list
         while let Some(ref mut region) = current.next {
-            if let Ok(alloc_start) = Self::alloc_from_region(&region, size, align) {
+            if let Ok(alloc_start) = Self::alloc_from_region(region, size, align) {
                 // region suitable for allocation -> remove node from list
                 let next = region.next.take();
                 let ret = Some((current.next.take().unwrap(), alloc_start));
@@ -94,9 +97,7 @@ impl LinkedListAllocator {
     /// alignment.
     ///
     /// Returns the allocation start address on success.
-    fn alloc_from_region(region: &ListNode, size: usize, align: usize)
-        -> Result<usize, ()>
-    {
+    fn alloc_from_region(region: &ListNode, size: usize, align: usize) -> Result<usize, ()> {
         let alloc_start = align_up(region.start_addr(), align);
         let alloc_end = alloc_start.checked_add(size).ok_or(())?;
 
@@ -118,6 +119,7 @@ impl LinkedListAllocator {
 
     /// Initialize the allocator with the given heap bounds.
     ///
+    /// # Safety
     /// This function is unsafe because the caller must guarantee that the given
     /// heap bounds are valid and that the heap is unused. This method must be
     /// called only once.
@@ -137,6 +139,12 @@ impl LinkedListAllocator {
         let node_ptr = addr as *mut ListNode;
         node_ptr.write(node);
         self.head.next = Some(&mut *node_ptr)
+    }
+}
+
+impl Default for LinkedListAllocator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -4,14 +4,13 @@
 #![test_runner(bobros::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use core::panic::PanicInfo;
 use bobros::println;
+use core::panic::PanicInfo;
 
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn _start() -> ! {
     test_main();
-
-    loop {}
+    bobros::hlt_loop()
 }
 
 #[panic_handler]
