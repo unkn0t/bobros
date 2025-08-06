@@ -1,0 +1,37 @@
+ARCH ?= x86_64
+KERNEL := build/kernel-$(ARCH).bin
+ISO := build/bobros-$(ARCH).iso
+
+LINKER_SCRIPT := src/arch/$(ARCH)/linker.ld
+GRUB_CFG := src/arch/$(ARCH)/grub.cfg
+ASM_SRCS := $(wildcard src/arch/$(ARCH)/*.s)
+ASM_OBJS := $(patsubst src/arch/$(ARCH)/%.s, build/arch/$(ARCH)/%.o, $(ASM_SRCS))
+	
+.PHONY: all clean run iso
+
+all: $(KERNEL)
+
+clean:
+	@rm -r build
+
+run: $(ISO)
+	@qemu-system-x86_64 -cdrom $(ISO)
+
+iso: $(ISO)
+	
+$(ISO): $(KERNEL) $(GRUB_CFG)
+	@mkdir -p build/isofiles/boot/grub
+	@cp $(KERNEL) build/isofiles/boot/kernel.bin
+	@cp $(GRUB_CFG) build/isofiles/boot/grub
+	@grub-mkrescue -o $(ISO) build/isofiles 2> /dev/null
+	@rm -r build/isofiles
+
+$(KERNEL): $(ASM_OBJS) $(LINKER_SCRIPT)
+	@ld -n -T $(LINKER_SCRIPT) -o $(KERNEL) $(ASM_OBJS)
+	@objcopy --remove-section .note.gnu.property $(KERNEL)
+
+build/arch/$(ARCH)/%.o: src/arch/$(ARCH)/%.s
+	@mkdir -pv $(shell dirname $@)
+	@as $< -o $@
+
+

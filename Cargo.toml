@@ -1,11 +1,11 @@
 [package]
 name = "bobros" 
-version = "0.1.0"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
+publish = false
 
-[build-dependencies]
-bootloader = "0.11"
-kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none"}
+[profile.dev]
+panic = "abort"
 
-[workspace]
-members = ["kernel"]
+[profile.release]
+panic = "abort"

@@ -1,18 +1,15 @@
-fn main() {
-    // read env variables that were set in build script
-    let bios_path = env!("BIOS_PATH");
-    println!("{}", bios_path);
+#![no_std]
+#![no_main]
+#![deny(unsafe_op_in_unsafe_fn)]
 
-    let mut cmd = std::process::Command::new("qemu-system-x86_64");
-    cmd.arg("-drive")
-        .arg(format!("format=raw,file={bios_path}"));
-    // .arg("-device")
-    // .arg("isa-debug-exit,iobase=0xf4,iosize=0x04")
-    // .arg("-serial")
-    // .arg("stdio")
-    // .arg("-display")
-    // .arg("none");
+use core::panic::PanicInfo;
 
-    let mut child = cmd.spawn().unwrap();
-    child.wait().unwrap();
+#[unsafe(no_mangle)]
+pub extern "C" fn _start() -> ! {
+    loop {}
+}
+
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
 }
