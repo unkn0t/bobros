@@ -4,15 +4,18 @@ ISO := build/bobros-$(ARCH).iso
 
 LINKER_SCRIPT := src/arch/$(ARCH)/linker.ld
 GRUB_CFG := src/arch/$(ARCH)/grub.cfg
-ASM_SRCS := $(wildcard src/arch/$(ARCH)/*.s)
-ASM_OBJS := $(patsubst src/arch/$(ARCH)/%.s, build/arch/$(ARCH)/%.o, $(ASM_SRCS))
+ASM_SRCS := $(wildcard src/arch/$(ARCH)/*.asm)
+ASM_OBJS := $(patsubst src/arch/$(ARCH)/%.asm, build/arch/$(ARCH)/%.o, $(ASM_SRCS))
 	
-.PHONY: all clean run iso
+.PHONY: all clean run run-dbg iso
 
 all: $(KERNEL)
 
 clean:
 	@rm -r build
+
+run-dbg: $(ISO)
+	@qemu-system-x86_64 -s -S -cdrom $(ISO)
 
 run: $(ISO)
 	@qemu-system-x86_64 -cdrom $(ISO)
@@ -28,10 +31,9 @@ $(ISO): $(KERNEL) $(GRUB_CFG)
 
 $(KERNEL): $(ASM_OBJS) $(LINKER_SCRIPT)
 	@ld -n -T $(LINKER_SCRIPT) -o $(KERNEL) $(ASM_OBJS)
-	@objcopy --remove-section .note.gnu.property $(KERNEL)
 
-build/arch/$(ARCH)/%.o: src/arch/$(ARCH)/%.s
+build/arch/$(ARCH)/%.o: src/arch/$(ARCH)/%.asm
 	@mkdir -pv $(shell dirname $@)
-	@as $< -o $@
+	@nasm -f elf64 $< -o $@
 
 

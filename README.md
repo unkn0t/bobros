@@ -1,7 +1,7 @@
 # BobrOS - small operating system
 
-## Dependencies
-- gnu toolchain for x86_64 (e.g. gcc)
+## Requirements:
+- nasm
 - grub
 
 ## Quick start

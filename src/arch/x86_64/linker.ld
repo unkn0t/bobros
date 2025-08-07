@@ -8,8 +8,18 @@ SECTIONS {
     *(.multiboot_header)
   }
 
-  .text ALIGN(4096) :
+  .text ALIGN(16) :
   {
     *(.text)
+  }
+
+  .rodata ALIGN(8) :
+  {
+    *(.rodata)
+  }
+
+  .bss ALIGN(4096) :
+  {
+    *(.bss)
   }
 }
