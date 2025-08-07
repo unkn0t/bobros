@@ -1,8 +1,9 @@
 # BobrOS - small operating system
 
 ## Requirements:
-- nasm
-- grub
+- Rust Toolchain (nightly) 
+- Nasm
+- Grub
 
 ## Quick start
 Build iso:

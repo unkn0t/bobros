@@ -1,9 +1,9 @@
-global _start
-extern long_mode_start
+global boot_entry
+extern long_mode_entry
 
 section .text
 bits 32
-_start:
+boot_entry:
     mov esp, stack_top
 
     call check_multiboot
@@ -15,9 +15,8 @@ _start:
 
     ; load the 64-bit GDT
     lgdt [gdt64.pointer]
-    jmp gdt64.code:long_mode_start
-
-    hlt
+    ; jmp to switch to long mode
+    jmp gdt64.code:long_mode_entry
 
 check_multiboot:
     cmp eax, 0x36d76289

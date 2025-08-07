@@ -6,12 +6,16 @@ LINKER_SCRIPT := src/arch/$(ARCH)/linker.ld
 GRUB_CFG := src/arch/$(ARCH)/grub.cfg
 ASM_SRCS := $(wildcard src/arch/$(ARCH)/*.asm)
 ASM_OBJS := $(patsubst src/arch/$(ARCH)/%.asm, build/arch/$(ARCH)/%.o, $(ASM_SRCS))
+
+TARGET ?= $(ARCH)-unknown-bobros
+RUST_OS := target/$(TARGET)/debug/libbobros.a
 	
-.PHONY: all clean run run-dbg iso
+.PHONY: all clean run run-dbg iso kernel
 
 all: $(KERNEL)
 
 clean:
+	@cargo clean
 	@rm -r build
 
 run-dbg: $(ISO)
@@ -29,8 +33,11 @@ $(ISO): $(KERNEL) $(GRUB_CFG)
 	@grub-mkrescue -o $(ISO) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
-$(KERNEL): $(ASM_OBJS) $(LINKER_SCRIPT)
-	@ld -n -T $(LINKER_SCRIPT) -o $(KERNEL) $(ASM_OBJS)
+$(KERNEL): kernel $(ASM_OBJS) $(LINKER_SCRIPT)
+	@ld -n -T $(LINKER_SCRIPT) -o $(KERNEL) $(ASM_OBJS) $(RUST_OS)
+
+kernel:
+	@cargo build
 
 build/arch/$(ARCH)/%.o: src/arch/$(ARCH)/%.asm
 	@mkdir -pv $(shell dirname $@)
