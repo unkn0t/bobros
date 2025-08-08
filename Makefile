@@ -7,8 +7,9 @@ GRUB_CFG := src/arch/$(ARCH)/grub.cfg
 ASM_SRCS := $(wildcard src/arch/$(ARCH)/*.asm)
 ASM_OBJS := $(patsubst src/arch/$(ARCH)/%.asm, build/arch/$(ARCH)/%.o, $(ASM_SRCS))
 
+PROFILE ?= debug
 TARGET ?= $(ARCH)-unknown-bobros
-RUST_OS := target/$(TARGET)/debug/libbobros.a
+RUST_OS := target/$(TARGET)/$(PROFILE)/libbobros.a
 	
 .PHONY: all clean run run-dbg iso kernel
 
@@ -37,7 +38,11 @@ $(KERNEL): kernel $(ASM_OBJS) $(LINKER_SCRIPT)
 	@ld -n -T $(LINKER_SCRIPT) -o $(KERNEL) $(ASM_OBJS) $(RUST_OS)
 
 kernel:
-	@cargo build
+ifeq ($(PROFILE), debug)
+	@cargo build --profile dev
+else
+	@cargo build --profile $(PROFILE)
+endif
 
 build/arch/$(ARCH)/%.o: src/arch/$(ARCH)/%.asm
 	@mkdir -pv $(shell dirname $@)

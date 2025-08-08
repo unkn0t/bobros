@@ -1,26 +1,25 @@
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
 
-use core::panic::PanicInfo;
-use core::ptr;
+pub mod memory;
+pub mod vga;
 
-static HELLO: &[u8] = b"Hello World!";
+use core::panic::PanicInfo;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    let vga_buffer: *mut u8 = ptr::without_provenance_mut(0xb8000);
+    println!("Hello, Rust!");
 
-    for (i, &byte) in HELLO.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
-
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    // TODO: print ColorCode to change color
+    vga::WRITER
+        .lock()
+        .set_color(vga::ColorCode::new(vga::Color::Red, vga::Color::Black));
+    println!("{info}");
     loop {}
 }
