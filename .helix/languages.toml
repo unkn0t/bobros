@@ -1,0 +1,3 @@
+[language-server.rust-analyzer.config]
+imports = { granularity = { group = "module" }}
+check = { command = "clippy", allTargets = false }
